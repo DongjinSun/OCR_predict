@@ -136,13 +136,17 @@ def sorted_boxes(dt_boxes):
 def find_name(res,max_box,max_len):
     res = sorted(res,key = lambda x : -x["sizes"])
     res_str = ""
+    res_list = []
     count = 0
     i = 0
-    while count < min(len(st),max_box) and i < len(max_len):
+    while count < min(len(res),max_box) and i < len(res):
         if len(res[i]["transcription"])<10:
-            res_str += res[i]["transcription"]
+            res_list.append(res[i])
             count += 1
         i += 1
+    res = sorted(res_list,key = lambda x: np.min(x["points"],axis=0)[1])
+    for i in res:
+        res_str += i["transcription"]
     return res_str
     
 
@@ -211,7 +215,7 @@ def main(args):
             } for i in range(len(dt_boxes))]
 
             res_str = find_name(res,max_box,max_len)
-
+            print(res_str)
             if len(imgs) > 1:
                 save_pred = os.path.basename(image_file) + '_' + str(
                     index) + "\t"+ res_str+"\t" + json.dumps(
