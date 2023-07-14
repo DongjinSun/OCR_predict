@@ -1,0 +1,16 @@
+환경설정
+1. cuda11.2 cudnn8 환경설치
+2. python3.8 설치
+3. apt install ffmpeg libsm6 libxext6  -y
+4.pip install -r requirements.txt 
+5. python3 predict_system.py --det_model_dir=./inference_model/korean_onnx_det/model.onnx  --rec_model_dir=./inference_model/korean_onnx_rec/model.onnx --image_dir="이미지경로"
+
+6. You can show result in ./inference_results
+
+※ params can modify in ./infer/utility.py
+
+
+Valid:
+python3 val_system.py --det_model_dir=./inference_model/korean_onnx_det/model.onnx  --rec_model_dir=./inference_model/korean_onnx_rec/model.onnx --image_dir=/data/test/image/ --label_dir=/data/test/json/
+
+※ label type = json
