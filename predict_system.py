@@ -76,8 +76,6 @@ class TextSystem(object):
             return None, None
         img_crop_list = []
 
-        dt_boxes = sorted_boxes(dt_boxes)
-
         for bno in range(len(dt_boxes)):
             tmp_box = copy.deepcopy(dt_boxes[bno])
             if self.args.det_box_type == "quad":
@@ -110,32 +108,8 @@ class TextSystem(object):
         return filter_boxes, filter_rec_res, time_dict
 
 
-def sorted_boxes(dt_boxes):
-    """
-    Sort text boxes in order from top to bottom, left to right
-    args:
-        dt_boxes(array):detected text boxes with shape [4, 2]
-    return:
-        sorted boxes(array) with shape [4, 2]
-    """
-    num_boxes = dt_boxes.shape[0]
-    sorted_boxes = sorted(dt_boxes, key=lambda x: (x[0][1], x[0][0]))
-    _boxes = list(sorted_boxes)
-
-    for i in range(num_boxes - 1):
-        for j in range(i, -1, -1):
-            if abs(_boxes[j + 1][0][1] - _boxes[j][0][1]) < 10 and \
-                    (_boxes[j + 1][0][0] < _boxes[j][0][0]):
-                tmp = _boxes[j]
-                _boxes[j] = _boxes[j + 1]
-                _boxes[j + 1] = tmp
-            else:
-                break
-    return _boxes
-
-def find_name(res,max_box,max_len):
+def sort_res(res,max_box,max_len,ypixel_th=10):
     res = sorted(res,key = lambda x : -x["sizes"])
-    res_str = ""
     res_list = []
     count = 0
     i = 0
@@ -144,10 +118,18 @@ def find_name(res,max_box,max_len):
             res_list.append(res[i])
             count += 1
         i += 1
-    res = sorted(res_list,key = lambda x: np.min(x["points"],axis=0)[1])
-    for i in res:
-        res_str += i["transcription"]
-    return res_str
+    res_list = sorted(res_list, key=lambda x: (x["points"][0][1], x["points"][0][0]))
+
+    for i in range(len(res_list)-1):
+        for j in range(i, -1, -1):
+            if abs(res_list[j+1]["points"][0][1] - res_list[j]["points"][0][1]) < ypixel_th and \
+                    (res_list[j+1]["points"][0][0] < res_list[j]["points"][0][0]):
+                tmp = res_list[i]["points"][j]
+                res_list[i]["points"][j] = res_list[i]["points"][j + 1]
+                res_list[i]["points"][j + 1] = tmp
+            else:
+                break
+    return res_list
     
 
 
@@ -156,7 +138,8 @@ def main(args):
     image_file_list = image_file_list[args.process_id::args.total_process_num]
     max_len, max_box = args.max_len, args.max_box
     text_sys = TextSystem(args)
-    is_visualize = True
+    is_visualize = args.is_visualize
+    ypixel_th = args.ypixel_th
     font_path = args.vis_font_path
     drop_score = args.drop_score
     draw_img_save_dir = args.draw_img_save_dir
@@ -179,7 +162,6 @@ def main(args):
     _st = time.time()
     count = 0
     for idx, image_file in enumerate(image_file_list):
-
         img, flag_gif, flag_pdf = check_and_read(image_file)
         if not flag_gif and not flag_pdf:
             img = cv2.imread(image_file)
@@ -198,31 +180,21 @@ def main(args):
             dt_boxes, rec_res, time_dict = text_sys(img)
             elapse = time.time() - starttime
             total_time += elapse
-            # if len(imgs) > 1:
-            #     logger.debug(
-            #         str(idx) + '_' + str(index) + "  Predict time of %s: %.3fs"
-            #         % (image_file, elapse))
-            # else:
-            #     logger.debug(
-            #         str(idx) + "  Predict time of %s: %.3fs" % (image_file,
-            #                                                     elapse))
-            # for text, score in rec_res:
-            #     logger.debug("{}, {:.3f}".format(text, score))
+
             res = [{
                 "transcription": rec_res[i][0],
                 "points": np.array(dt_boxes[i]).astype(np.int32).tolist(),
                 "sizes" : float((np.max(dt_boxes[i],axis=0)[0]-np.min(dt_boxes[i],axis=0)[0])*(np.max(dt_boxes[i],axis=0)[1]-np.min(dt_boxes[i],axis=0)[1]))
             } for i in range(len(dt_boxes))]
 
-            res_str = find_name(res,max_box,max_len)
-            print(res_str)
+            res = sort_res(res,max_box,max_len,ypixel_th)
+            result = [{"file_name":os.path.basename(image_file),
+                        "bbox":res}]
+            # print(res_str)
             if len(imgs) > 1:
-                save_pred = os.path.basename(image_file) + '_' + str(
-                    index) + "\t"+ res_str+"\t" + json.dumps(
-                        res, ensure_ascii=False) + "\n"
+                save_pred = json.dumps(result, ensure_ascii=False) + "\n"
             else:
-                save_pred = os.path.basename(image_file) + "\t"+ res_str+"\t" + json.dumps(
-                    res, ensure_ascii=False) + "\n"
+                save_pred = json.dumps(result, ensure_ascii=False,indent =4) + "\n"
             save_results.append(save_pred)
 
             if is_visualize:

@@ -42,6 +42,7 @@ def init_args():
     parser.add_argument("--gpu_mem", type=int, default=500)
     parser.add_argument("--gpu_id", type=int, default=0)
 
+
     # params for text detector
     parser.add_argument("--image_dir", type=str)
     parser.add_argument("--label_dir", type=str, default=None)
@@ -59,6 +60,7 @@ def init_args():
     parser.add_argument("--max_batch_size", type=int, default=10)
     parser.add_argument("--use_dilation", type=str2bool, default=False)
     parser.add_argument("--det_db_score_mode", type=str, default="fast")
+    
 
     # EAST parmas
     parser.add_argument("--det_east_score_thresh", type=float, default=0.8)
@@ -130,9 +132,15 @@ def init_args():
 
     #
     parser.add_argument(
-        "--draw_img_save_dir", type=str, default="./inference_results/system_onnx2_230629")
+        "--draw_img_save_dir", type=str, default="./inference_results/")
     parser.add_argument("--save_crop_res", type=str2bool, default=False)
     parser.add_argument("--crop_res_save_dir", type=str, default="./output")
+    parser.add_argument("--max_len", type=int, default=10)
+    parser.add_argument("--max_box", type=int, default=3)
+    parser.add_argument("--is_visualize", type=str2bool, default=False)
+    parser.add_argument("--ypixel_th", type=int, default=10)
+
+
 
     # multi-process
     parser.add_argument("--use_mp", type=str2bool, default=False)
@@ -145,9 +153,7 @@ def init_args():
     parser.add_argument("--show_log", type=str2bool, default=True)
     parser.add_argument("--use_onnx", type=str2bool, default=True)
     parser.add_argument("--local_rank", type=int, default=0)
-    parser.add_argument("--max_len", type=int, default=10)
-    parser.add_argument("--max_box", type=int, default=3)
-
+    
 
     return parser
 

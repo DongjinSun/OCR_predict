@@ -1,16 +1,26 @@
 환경설정
-1. cuda11.2 cudnn8 환경설치
-2. python3.8 설치
+1. cuda11.2 cudnn8 docker
+2. apt install python3.8 & apt install python3-pip 
 3. apt install ffmpeg libsm6 libxext6  -y
-4.pip install -r requirements.txt 
-5. python3 predict_system.py --det_model_dir=./inference_model/korean_onnx_det/model.onnx  --rec_model_dir=./inference_model/korean_onnx_rec/model.onnx --image_dir="이미지경로"
+4. pip install -r requirements.txt 
+5. python3 predict_system.py --det_model_dir=./inference_model/korean_onnx_det/model.onnx  --rec_model_dir=./inference_model/korean_onnx_rec4/model.onnx --image_dir="이미지경로" --max_box=3 --max_len=10 --drop_score 0.9 --is_visualize=False
 
-6. You can show result in ./inference_results
 
-※ params can modify in ./infer/utility.py
+max_box = 찾을 박스 개수
+max_len = 한 박스당 최대 문자열 길이
+drop_score = detect 확률 threshold // Label Name으로 finetuning 해서 Label name 확률이 높게 나오므로 0.9로 높게 설정해서 최대한 라벨만 검출되도록 함
+is_visualize = 결과 사진 저장
+※ other params can modify in ./infer/utility.py
+
+
+6. You can show result in ./inference_results   image and system_results.txt
+
+※system_results.txt 형식
+image_file_name \t image_text_result \t json
+
 
 
 Valid:
-python3 val_system.py --det_model_dir=./inference_model/korean_onnx_det/model.onnx  --rec_model_dir=./inference_model/korean_onnx_rec/model.onnx --image_dir=/data/test/image/ --label_dir=/data/test/json/
+python3 val_system.py --det_model_dir=./inference_model/korean_onnx_det/model.onnx  --rec_model_dir=./inference_model/korean_onnx_rec4/model.onnx --image_dir=/data/test/image/ --label_dir=/data/test/json/
 
 ※ label type = json
